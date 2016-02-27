@@ -153,22 +153,21 @@ function ItemDAO(database) {
          *
          */
         
-        var item = this.createDummyItem();
-        var items = [];
-        for (var i=0; i<5; i++) {
-            items.push(item);
-        }
+        /* Query
+         * db.item.createIndex({"title" : "text", "slogan": "text", "description": "text"}, {"sparse": true})
+         * db.item.find({"$text": {"$search" : "shirt"}}).limit(3).skip(1).pretty()
+        */
+        let queryDoc = {$text: {$search: query}};
 
-        // TODO-lab2A Replace all code above (in this method).
-
-        callback(items);
+        this.db.collection('item').find(queryDoc).limit(itemsPerPage).skip(page * itemsPerPage).toArray(function(err, docs) {
+            assert.equal(err, null);
+            callback(docs);
+        });
     }
 
 
     this.getNumSearchItems = function(query, callback) {
         "use strict";
-
-        var numItems = 0;
         
         /*
         * TODO-lab2B
@@ -179,7 +178,17 @@ function ItemDAO(database) {
         *
         */
 
-        callback(numItems);
+        /* Query
+         * db.item.find({"$text": {"$search" : "shirt"}}).count()
+        */
+            
+        let queryDoc = {$text: {$search: query}};
+
+        this.db.collection('item').find(queryDoc).count(function(err, count) {
+            assert.equal(err, null);
+            callback(count);
+        });
+
     }
 
 
@@ -193,12 +202,13 @@ function ItemDAO(database) {
          * to the callback function.
          *
          */
-        
-        var item = this.createDummyItem();
 
-        // TODO-lab3 Replace all code above (in this method).
+         let queryDoc = {_id: itemId};
 
-        callback(item);
+        this.db.collection('item').find(queryDoc).limit(1).next(function(err, doc) {
+            assert.equal(err, null);
+            callback(doc);
+        });
     }
 
 
