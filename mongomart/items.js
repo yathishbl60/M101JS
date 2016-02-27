@@ -203,7 +203,7 @@ function ItemDAO(database) {
          *
          */
 
-         let queryDoc = {_id: itemId};
+        let queryDoc = {_id: itemId};
 
         this.db.collection('item').find(queryDoc).limit(1).next(function(err, doc) {
             assert.equal(err, null);
@@ -235,6 +235,9 @@ function ItemDAO(database) {
          * "stars", and "date".
          *
          */
+         /* Query
+          * db.item.updateOne({"_id":10},{"$push":{"reviews":reviewDoc}})
+         */
 
         var reviewDoc = {
             name: name,
@@ -243,28 +246,13 @@ function ItemDAO(database) {
             date: Date.now()
         }
 
-        var dummyItem = this.createDummyItem();
-        dummyItem.reviews = [reviewDoc];
-        callback(dummyItem);
-    }
+        let filterDoc = {"_id": itemId};
+        let updateDoc = {$push: {"reviews": reviewDoc}};
 
-
-    this.createDummyItem = function() {
-        "use strict";
-
-        var item = {
-            _id: 1,
-            title: "Gray Hooded Sweatshirt",
-            description: "The top hooded sweatshirt we offer",
-            slogan: "Made of 100% cotton",
-            stars: 0,
-            category: "Apparel",
-            img_url: "/img/products/hoodie.jpg",
-            price: 29.99,
-            reviews: []
-        };
-
-        return item;
+        this.db.collection('item').updateOne(filterDoc, updateDoc, function(err, item) {
+            assert.equal(err, null);
+            callback(item);
+        });
     }
 }
 

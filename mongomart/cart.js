@@ -37,16 +37,18 @@ function CartDAO(database) {
         *
         */
 
-        var userCart = {
-            userId: userId,
-            items: []
-        }
-        var dummyItem = this.createDummyItem();
-        userCart.items.push(dummyItem);
-        
-        // TODO-lab5 Replace all code above (in this method).
+        /* Query
+         * db.cart.find({},{userId:1}).pretty()
+        */
 
-        callback(userCart);
+        let queryDoc = {
+            "userId": userId
+        };
+
+        this.db.collection('cart').find(queryDoc).limit(1).next(function(err, document) {
+            assert.equal(err, null);
+            callback(document);
+        })
     }
 
 
@@ -78,9 +80,19 @@ function CartDAO(database) {
          *
          */
 
-        callback(null);
+         let queryDoc = { 
+            "userId": userId,
+            "items._id": itemId
+        };
 
-        // TODO-lab6 Replace all code above (in this method).
+        this.db.collection('cart').findOne(queryDoc, { "items.$": 1 }, function(err, result) {
+            assert.equal(err, null);
+            if (result !== null) {
+                result = result.items[0];
+            }
+            console.log(result);
+            callback(result);
+        });
     }
 
     
@@ -170,36 +182,35 @@ function CartDAO(database) {
         *
         */
 
-        var userCart = {
+        let queryDoc = {
             userId: userId,
-            items: []
-        }
-        var dummyItem = this.createDummyItem();
-        dummyItem.quantity = quantity;
-        userCart.items.push(dummyItem);
-        callback(userCart);
-        
-        // TODO-lab7 Replace all code above (in this method).
-
-    }
-
-    this.createDummyItem = function() {
-        "use strict";
-
-        var item = {
-            _id: 1,
-            title: "Gray Hooded Sweatshirt",
-            description: "The top hooded sweatshirt we offer",
-            slogan: "Made of 100% cotton",
-            stars: 0,
-            category: "Apparel",
-            img_url: "/img/products/hoodie.jpg",
-            price: 29.99,
-            quantity: 1,
-            reviews: []
+            "items._id": itemId 
         };
 
-        return item;
+         let optionsDoc = {
+            upsert: false, 
+            returnOriginal: false 
+        };
+
+        // Documents used for the update
+        let updateIncreaseQuantityDoc = {               // quantity !== 0
+                $set: { "items.$.quantity": quantity }
+        };
+        let updateRemoveItemDoc = { $pull: { "items": { _id: itemId } } };  // quantity === 0
+        let updateDoc = {};
+
+        if (quantity === 0) {
+            updateDoc = updateRemoveItemDoc;
+        } else {
+            updateDoc = updateIncreaseQuantityDoc;
+        }
+
+        this.db.collection('cart').findOneAndUpdate(queryDoc, updateDoc, optionsDoc, function(err, result) {
+            assert.equal(err, null);
+            console.log(result);
+            callback(result.value);
+        });
+
     }
 
 }
