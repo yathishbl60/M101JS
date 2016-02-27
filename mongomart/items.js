@@ -43,17 +43,32 @@ function ItemDAO(database) {
         *
         */
 
-        var categories = [];
-        var category = {
-            _id: "All",
-            num: 9999
-        };
+        /*
+        * query
+        db.item.aggregate([{"$match": {"category" : {"$exists" : true, "$ne": null}}}, {"$project": {"category" : 1, "_id": 0}}, {"$group": {"_id": "$category", "num" : {"$sum" : 1}}}, {"$sort": {"_id": 1}}])
+        */
+        let allCategoryDoc = {_id: "All", num: 0};
 
-        categories.push(category)
+        this.db.collection('item').aggregate([
+            {$match: {category: {$exists: true, $ne: null}}},
+            {$project: {category: 1, _id: 1}},
+            {$group: {
+                _id: "$category",
+                num: {$sum: 1}
+            }},
+            {$sort: {_id: 1}}
+            ]).toArray(function(err, docs) {
+                assert.equal(err, null);
+                let allCategoryCount = 0
+                for (var i = docs.length - 1; i >= 0; i--) {
+                    allCategoryCount += docs[i].num;
+                };
 
-        // TODO-lab1A Replace all code above (in this method).
-        
-        callback(categories);
+                allCategoryDoc.num = allCategoryCount;
+
+                docs.unshift(allCategoryDoc);
+                callback(docs);
+            });
     }
 
 
