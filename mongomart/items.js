@@ -43,9 +43,8 @@ function ItemDAO(database) {
         *
         */
 
-        /*
-        * query
-        db.item.aggregate([{"$match": {"category" : {"$exists" : true, "$ne": null}}}, {"$project": {"category" : 1, "_id": 0}}, {"$group": {"_id": "$category", "num" : {"$sum" : 1}}}, {"$sort": {"_id": 1}}])
+        /* Query
+        * db.item.aggregate([{"$match": {"category" : {"$exists" : true, "$ne": null}}}, {"$project": {"category" : 1, "_id": 0}}, {"$group": {"_id": "$category", "num" : {"$sum" : 1}}}, {"$sort": {"_id": 1}}])
         */
         let allCategoryDoc = {_id: "All", num: 0};
 
@@ -88,23 +87,25 @@ function ItemDAO(database) {
          *
          */
 
-        var pageItem = this.createDummyItem();
-        var pageItems = [];
-        for (var i=0; i<5; i++) {
-            pageItems.push(pageItem);
-        }
+         /* Query
+         *  db.item.find({category: "Apparel"}, {"title": 1}).limit(5).skip(3).pretty()
+         */
 
-        // TODO-lab1B Replace all code above (in this method).
+         let queryDoc = {"category": category};
+         if(category == "All") {
+            queryDoc = {};
+         }
 
-        callback(pageItems);
+         this.db.collection('item').find(queryDoc).limit(itemsPerPage).skip(page * itemsPerPage).toArray(function(err, docs) {
+            assert.equal(err, null);
+            callback(docs);
+         });
     }
 
 
     this.getNumItems = function(category, callback) {
         "use strict";
         
-        var numItems = 0;
-
         /*
          * TODO-lab1C
          *
@@ -116,8 +117,21 @@ function ItemDAO(database) {
          * getNumItems() method.
          *
          */
+
+         /* Query 
+          *  db.item.find({"category":"Apparel"}, {"title": 1}).count()
+         */
+         let queryDoc = {"category": category};
+
+         if(category == "All") {
+            queryDoc = {};
+         }
+
+         this.db.collection('item').find(queryDoc).count(function(err, count) {
+            assert.equal(err, null);
+            callback(count);
+         });
         
-        callback(numItems);
     }
 
 
